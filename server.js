@@ -1,40 +1,36 @@
 const express = require('express');
-const cors = require('cors');
 const app = express();
 const mysql = require('mysql2');
+const cors = require('cors');
 
-const connection = mysql.createConnection({
+const db = mysql.createConnection({
   host: 'localhost',
   user: 'root',
   password: 'sunwoo2001!',
-  database: 'mean'
+  database: 'mean',
 });
 
-const corsOptions = {
-  origin: 'http://localhost:3000/data', // 요청을 허용할 도메인
-  methods: ['GET', 'POST', 'PUT', 'DELETE'], // 요청을 허용할 HTTP 메서드
-  allowedHeaders: ['Authorization', 'Content-Type'], // 요청을 허용할 헤더
-  credentials: true // 자격 증명 정보 포함 여부
-};
+app.use(cors({
+  origin: "*",                
+  credentials: true,          
+  optionsSuccessStatus: 200,  
+}))
 
+app.get(`/`, (req, res) => {
+  const ob_name = req.query.result;
+  const sqlQuery = `SELECT description FROM objects WHERE name = ?`;
 
-app.use(cors(corsOptions)); // CORS 미들웨어 등록
-connection.connect((err) => {
-  if (err) {
-    console.error('Error connecting to MySQL database: ', err);
-    return;
-  }
-    console.log('Server listening on port 3000');
-});
-
-
-
-app.get('/data', (req, res) => {
-  connection.query('SELECT * FROM objects', (err, rows) => {
+  db.query(sqlQuery, [ob_name], (err, result) => {
     if (err) {
-      console.error('Error executing MySQL query: ', err);
-      return;
+      console.error(err);
+      res.status(500).json({ error: "An error occurred while getting object description" });
+    } else {
+      console.log(result);
+      res.json(result);
     }
-    res.send(rows);
   });
+});
+
+app.listen(5000, function() {
+  console.log('Server is listening on port 5000');
 });
